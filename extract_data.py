@@ -84,7 +84,7 @@ def save_rows_to_csv(rows, filename="extracted_table.csv"):
         writer.writerows(rows)
 
 # === MAIN ===
-pdf_path = r"C:\Users\david\Downloads\ZBA Decisions 2014-2025\ZBA Signed Decisions\2025 Decisions\2610 Maple Ave - 63 of 2025.pdf"
+pdf_path = "2610 Maple Ave - 63 of 2025.pdf"
 lines = extract_application_section_lines(pdf_path)
 rows = parse_lines_preserving_rows(lines)
 save_rows_to_csv(rows, filename="2610_Maple_Ave_Table.csv")
