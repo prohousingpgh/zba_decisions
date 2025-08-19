@@ -108,7 +108,13 @@ def parse_lines_preserving_rows(lines, tables, ocr_flag, filename):
         if line.startswith("s/"):
             in_decision = False
         if in_decision:
-            decision_text += line
+            decision_text += line + " "
+    if ("APPROVES" in decision_text or "may continue" in decision_text or "APPROVED" in decision_text) and not ("DENIED" in decision_text or "DENIES" in decision_text):
+        decision = "APPROVED"
+    elif ("DENIED" in decision_text or "DENIES" in decision_text) and not ("APPROVES" in decision_text or "may continue" in decision_text or "APPROVED" in decision_text):
+        decision = "DENIED"
+    else:
+        decision = "UNKNOWN"
 
     start_table = False
     rows_found = False
@@ -126,7 +132,7 @@ def parse_lines_preserving_rows(lines, tables, ocr_flag, filename):
                     break
                 # Write an entry to the final list if it looks like the entry is over
                 if current_description != "" and ((row[0] == "" and row[1] == "" and row[2] == "" and ("Exception" in current_type or "Variance" in current_type or "Appeal" in current_type or "Review" in current_type)) or row[0].startswith(tuple(start_indicators))):
-                    rows.append([filename, hearing_date, decision_date, case_number, address, current_type, current_section, current_description.strip(), decision_text, ocr_flag])
+                    rows.append([filename, hearing_date, decision_date, case_number, address, current_type, current_section, current_description.strip(), decision, decision_text, ocr_flag])
                     rows_found = True
                     new_section = True
                     current_description = ""
@@ -145,11 +151,11 @@ def parse_lines_preserving_rows(lines, tables, ocr_flag, filename):
 
     # Final row
     if current_type and current_description:
-        rows.append([filename, hearing_date, decision_date, case_number, address, current_type, current_section, current_description.strip(), decision_text, ocr_flag])
+        rows.append([filename, hearing_date, decision_date, case_number, address, current_type, current_section, current_description.strip(), decision, decision_text, ocr_flag])
         rows_found = True
 
     if not rows_found:
-        rows.append([filename, hearing_date, decision_date, case_number, address, "None found", "None found", "None found", decision_text, ocr_flag])
+        rows.append([filename, hearing_date, decision_date, case_number, address, "None found", "None found", "None found", decision, decision_text, ocr_flag])
         print("No rows found for " + filename)
 
     return rows
@@ -157,7 +163,7 @@ def parse_lines_preserving_rows(lines, tables, ocr_flag, filename):
 def save_rows_to_csv(rows, filename="extracted_table.csv"):
     with open(filename, "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
-        writer.writerow(["File Name", "Hearing Date", "Decision Date", "Case Number", "Address", "Type", "Section", "Description", "Decision", "OCR Flag"])
+        writer.writerow(["File Name", "Hearing Date", "Decision Date", "Case Number", "Address", "Type", "Section", "Description", "Decision", "Decision Text", "OCR Flag"])
         writer.writerows(rows)
 
 # === MAIN ===
@@ -169,5 +175,5 @@ for name in os.listdir(input_directory):
         rows.extend(parse_lines_preserving_rows(lines, tables, ocr_flag, name))
     except Exception as e:
         print("Error while parsing file " + name, e)
-        rows.append([name, "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error"])
+        rows.append([name, "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error"])
 save_rows_to_csv(rows, filename="output.csv")
